@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tính toán cấp phối bê tông</title>
+    <style>
+      :root {
+        --bg: #fffdf7;
+        --surface: #ffffff;
+        --surface-soft: #fff8df;
+        --text: #2f3437;
+        --muted: #73716c;
+        --line: #ece4d4;
+        --yellow: #f4b000;
+        --yellow-soft: #ffe8a3;
+        --yellow-pale: #fff4c8;
+        --shadow: 0 24px 70px rgba(55, 49, 39, 0.1);
+        --yellow-shadow: 0 20px 54px rgba(244, 176, 0, 0.22);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-width: 320px;
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+      }
+
+      .page {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      .page::before {
+        position: absolute;
+        inset: 0;
+        content: "";
+        opacity: 0.78;
+        background-image:
+          linear-gradient(rgba(244, 180, 0, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(244, 180, 0, 0.08) 1px, transparent 1px),
+          radial-gradient(circle at 18% 12%, rgba(245, 180, 0, 0.16), transparent 27%),
+          radial-gradient(circle at 86% 78%, rgba(245, 180, 0, 0.13), transparent 30%);
+        background-size: 42px 42px, 42px 42px, 100% 100%, 100% 100%;
+      }
+
+      .glow {
+        position: absolute;
+        border-radius: 999px;
+        filter: blur(60px);
+        pointer-events: none;
+      }
+
+      .glow-left {
+        left: -120px;
+        top: 110px;
+        width: 310px;
+        height: 310px;
+        background: rgba(255, 220, 99, 0.42);
+      }
+
+      .glow-right {
+        right: -130px;
+        bottom: -130px;
+        width: 410px;
+        height: 410px;
+        background: rgba(255, 204, 38, 0.32);
+      }
+
+      .outline-block {
+        position: absolute;
+        top: 34px;
+        right: 50px;
+        display: none;
+        width: 112px;
+        height: 112px;
+        border: 18px solid rgba(244, 176, 0, 0.22);
+        border-radius: 32px;
+        transform: rotate(12deg);
+        pointer-events: none;
+      }
+
+      .container {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        width: min(100%, 1280px);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 24px 20px 34px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: #151515;
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+      }
+
+      .brand-mark,
+      .material-icon,
+      .section-icon,
+      .result-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+      }
+
+      .brand-mark {
+        width: 44px;
+        height: 44px;
+        color: #151515;
+        background: var(--yellow);
+        border-radius: 18px;
+        box-shadow: 0 14px 30px rgba(245, 180, 0, 0.3);
+        animation: soft-float 4.5s ease-in-out infinite;
+      }
+
+      .top-note {
+        display: none;
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .layout {
+        display: grid;
+        flex: 1;
+        align-items: center;
+        gap: 28px;
+        padding-top: 34px;
+      }
+
+      .hero {
+        max-width: 660px;
+        animation: fade-in-up 0.72s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0;
+        padding: 9px 14px;
+        color: #a46600;
+        background: #fff;
+        border: 1px solid #ffe6a0;
+        border-radius: 999px;
+        box-shadow: 0 10px 30px rgba(55, 49, 39, 0.08);
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      h1 {
+        margin: 24px 0 0;
+        max-width: 720px;
+        color: #151515;
+        font-size: clamp(42px, 9vw, 82px);
+        line-height: 0.95;
+        letter-spacing: -0.065em;
+        font-weight: 950;
+      }
+
+      .lead {
+        max-width: 620px;
+        margin: 20px 0 0;
+        color: #5d5c58;
+        font-size: clamp(16px, 2vw, 18px);
+        line-height: 1.7;
+        font-weight: 560;
+      }
+
+      .panel {
+        padding: 18px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(226, 217, 199, 0.88);
+        border-radius: 32px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
+        animation: fade-in-up 0.72s 0.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 20px;
+      }
+
+      h2 {
+        margin: 0;
+        color: #1d1d1d;
+        font-size: 25px;
+        line-height: 1.1;
+        letter-spacing: -0.045em;
+        font-weight: 950;
+      }
+
+      .panel-head p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .section-icon {
+        width: 48px;
+        height: 48px;
+        color: #a46600;
+        background: var(--yellow-pale);
+        border-radius: 18px;
+      }
+
+      .controls {
+        display: grid;
+        gap: 16px;
+      }
+
+      .material-card {
+        padding: 16px;
+        background: #fff;
+        border: 1px solid rgba(226, 217, 199, 0.86);
+        border-radius: 26px;
+        box-shadow: 0 14px 34px rgba(55, 49, 39, 0.06);
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      }
+
+      .material-card:hover {
+        transform: translateY(-2px);
+        border-color: #ffd66d;
+        box-shadow: 0 18px 44px rgba(245, 180, 0, 0.12);
+      }
+
+      .material-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .material-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .material-icon {
+        width: 40px;
+        height: 40px;
+        color: #a46600;
+        background: #fff0bc;
+        border-radius: 16px;
+      }
+
+      label {
+        display: block;
+        color: #282b2e;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .hint {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .number-wrap {
+        display: flex;
+        align-items: center;
+        flex: 0 0 auto;
+        min-height: 42px;
+        padding: 8px 11px;
+        background: #faf8f2;
+        border: 1px solid #ebe4d6;
+        border-radius: 16px;
+      }
+
+      .number-input {
+        width: 70px;
+        min-width: 0;
+        color: #161616;
+        background: transparent;
+        border: 0;
+        outline: 0;
+        text-align: right;
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      .unit {
+        margin-left: 4px;
+        white-space: nowrap;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .range {
+        width: 100%;
+        height: 20px;
+        margin-top: 14px;
+        appearance: none;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .range::-webkit-slider-runnable-track {
+        height: 9px;
+        border-radius: 999px;
+        background: linear-gradient(
+          90deg,
+          var(--yellow) 0%,
+          var(--yellow) var(--progress, 50%),
+          #e8e2d6 var(--progress, 50%),
+          #e8e2d6 100%
+        );
+      }
+
+      .range::-webkit-slider-thumb {
+        width: 22px;
+        height: 22px;
+        margin-top: -6.5px;
+        appearance: none;
+        border: 4px solid #fff;
+        border-radius: 999px;
+        background: #2f3437;
+        box-shadow: 0 8px 18px rgba(47, 52, 55, 0.18);
+      }
+
+      .range::-moz-range-track {
+        height: 9px;
+        border-radius: 999px;
+        background: #e8e2d6;
+      }
+
+      .range::-moz-range-progress {
+        height: 9px;
+        border-radius: 999px;
+        background: var(--yellow);
+      }
+
+      .range::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border: 4px solid #fff;
+        border-radius: 999px;
+        background: #2f3437;
+        box-shadow: 0 8px 18px rgba(47, 52, 55, 0.18);
+      }
+
+      .range-scale {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2px;
+        color: #a5a09a;
+        font-size: 11px;
+        font-weight: 850;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .volume-box {
+        margin-top: 18px;
+        padding: 16px;
+        background: rgba(255, 244, 200, 0.8);
+        border: 1px solid #ffd66d;
+        border-radius: 26px;
+      }
+
+      .volume-row {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .volume-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .volume-label .material-icon {
+        background: #fff;
+        box-shadow: 0 8px 18px rgba(55, 49, 39, 0.06);
+      }
+
+      .volume-input-wrap {
+        align-self: flex-start;
+        display: flex;
+        align-items: center;
+        padding: 12px 14px;
+        background: #fff;
+        border: 1px solid #ffd66d;
+        border-radius: 18px;
+      }
+
+      .volume-input-wrap .number-input {
+        width: 96px;
+        font-size: 21px;
+      }
+
+      .button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        margin-top: 18px;
+        padding: 18px 24px;
+        color: #171717;
+        background: var(--yellow);
+        border-radius: 26px;
+        box-shadow: 0 18px 42px rgba(245, 180, 0, 0.34);
+        font-size: 18px;
+        font-weight: 950;
+        cursor: pointer;
+        transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        background: #ffc53a;
+        box-shadow: 0 22px 50px rgba(245, 180, 0, 0.38);
+      }
+
+      .button:focus-visible {
+        outline: 4px solid #ffe29a;
+        outline-offset: 3px;
+      }
+
+      .button svg {
+        transition: transform 0.25s ease;
+      }
+
+      .button:hover svg {
+        transform: rotate(-8deg);
+      }
+
+      .meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .result-card {
+        padding: 22px;
+        background: linear-gradient(135deg, #fff3c4 0%, #ffffff 45%, #ffffff 100%);
+        border: 1px solid rgba(255, 205, 83, 0.86);
+        border-radius: 32px;
+        box-shadow: var(--yellow-shadow);
+        animation: fade-in-up 0.72s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+      }
+
+      .result-kicker {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #9a6500;
+        font-size: 13px;
+        font-weight: 950;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .result-icon {
+        width: 42px;
+        height: 42px;
+        color: #171717;
+        background: var(--yellow);
+        border-radius: 17px;
+        box-shadow: 0 12px 28px rgba(245, 180, 0, 0.28);
+      }
+
+      .result-main {
+        margin-top: 28px;
+      }
+
+      .result-main.is-updating {
+        animation: result-pop 0.52s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+
+      .result-label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 850;
+      }
+
+      .grade-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 4px 16px;
+        margin-top: 4px;
+      }
+
+      .grade {
+        color: #111;
+        font-size: clamp(72px, 18vw, 110px);
+        line-height: 0.88;
+        letter-spacing: -0.08em;
+        font-weight: 1000;
+      }
+
+      .mpa {
+        padding-bottom: 9px;
+        color: #a46600;
+        font-size: clamp(20px, 4vw, 28px);
+        font-weight: 950;
+      }
+
+      .result-note {
+        max-width: 620px;
+        margin: 18px 0 0;
+        color: #4d4c48;
+        font-size: 16px;
+        line-height: 1.55;
+        font-weight: 750;
+      }
+
+      .divider {
+        height: 1px;
+        margin: 28px 0 24px;
+        background: linear-gradient(90deg, transparent, #ffd66d, transparent);
+      }
+
+      .total-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+
+      .total-head p {
+        margin: 0;
+      }
+
+      .total-title {
+        color: #262626;
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      .total-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .totals {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .total-item {
+        padding: 13px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid #ffecb0;
+        border-radius: 18px;
+      }
+
+      .total-name {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .total-value {
+        margin: 5px 0 0;
+        color: #151515;
+        font-size: 19px;
+        line-height: 1.1;
+        font-weight: 950;
+      }
+
+      .total-unit {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      svg {
+        width: 21px;
+        height: 21px;
+      }
+
+      @keyframes fade-in-up {
+        from {
+          opacity: 0;
+          transform: translateY(18px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes soft-float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(-2deg);
+        }
+
+        50% {
+          transform: translateY(-7px) rotate(2deg);
+        }
+      }
+
+      @keyframes result-pop {
+        0% {
+          opacity: 0;
+          transform: translateY(12px) scale(0.96);
+        }
+
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @media (min-width: 640px) {
+        .container {
+          padding: 28px 32px 40px;
+        }
+
+        .top-note {
+          display: block;
+        }
+
+        .volume-row {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .volume-input-wrap {
+          align-self: auto;
+        }
+
+        .totals {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .outline-block {
+          display: block;
+        }
+
+        .container {
+          padding: 34px 40px 48px;
+        }
+
+        .layout {
+          grid-template-columns: 0.92fr 1.08fr;
+          grid-template-rows: auto auto;
+          column-gap: 42px;
+          row-gap: 30px;
+          padding-top: 38px;
+        }
+
+        .panel {
+          grid-column: 2;
+          grid-row: 1 / span 2;
+          padding: 24px;
+        }
+
+        .result-card {
+          grid-column: 1;
+          grid-row: 2;
+          padding: 28px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="glow glow-left" aria-hidden="true"></div>
+      <div class="glow glow-right" aria-hidden="true"></div>
+      <div class="outline-block" aria-hidden="true"></div>
+
+      <div class="container">
+        <header class="topbar">
+          <div class="brand" aria-label="CapPhoi Pro">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4.5 13.5h15l-1.1-4.2A4 4 0 0 0 14.5 6H9.4a4 4 0 0 0-3.8 3.3l-1.1 4.2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M8.5 6V4.8h7V6m-12 7.5h17m-14 0v2.7a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </span>
+            <span>CapPhoi Pro</span>
+          </div>
+          <p class="top-note">Công cụ tham khảo nhanh cho công trình</p>
+        </header>
+
+        <div class="layout">
+          <section class="hero" aria-labelledby="main-title">
+            <p class="eyebrow">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 16.5h11.5l1.8-4.3-5.8-4.7H7.2L5 12.8l1 3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M8.5 19.2a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm8.4 0a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4ZM4.5 12.8H3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              Công cụ vật liệu xây dựng
+            </p>
+            <h1 id="main-title">Tính toán cấp phối bê tông</h1>
+            <p class="lead">
+              Nhập định lượng xi măng, cát, đá, nước và khối lượng cần trộn để ước tính nhanh mác bê tông cùng lượng vật liệu cần chuẩn bị.
+            </p>
+          </section>
+
+          <section class="panel" aria-labelledby="input-title">
+            <div class="panel-head">
+              <div>
+                <h2 id="input-title">Nhập dữ liệu cấp phối</h2>
+                <p>Đơn vị vật liệu tính trên 1 m3 bê tông.</p>
+              </div>
+              <span class="section-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="m4.8 15.5 10.7-10.7 3.7 3.7L8.5 19.2l-3.7-3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                  <path d="m9 15-1.2-1.2m3.9-1.4-1.2-1.2m3.9-1.4-1.2-1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                </svg>
+              </span>
+            </div>
+
+            <div class="controls" id="materialControls"></div>
+
+            <div class="volume-box">
+              <div class="volume-row">
+                <div class="volume-label">
+                  <span class="material-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path d="m4.8 15.5 10.7-10.7 3.7 3.7L8.5 19.2l-3.7-3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                      <path d="m9 15-1.2-1.2m3.9-1.4-1.2-1.2m3.9-1.4-1.2-1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <div>
+                    <label for="volume">Khối lượng bê tông cần trộn (m3)</label>
+                    <p class="hint">Từ 0,1 đến 100 m3</p>
+                  </div>
+                </div>
+                <div class="volume-input-wrap">
+                  <input class="number-input" id="volume" type="number" min="0.1" max="100" step="0.1" value="1" />
+                  <span class="unit">m3</span>
+                </div>
+              </div>
+            </div>
+
+            <button class="button" id="calculateButton" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 16.5h11.5l1.8-4.3-5.8-4.7H7.2L5 12.8l1 3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M8.5 19.2a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm8.4 0a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4ZM4.5 12.8H3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              Tính toán
+            </button>
+
+            <div class="meta-row">
+              <span>Tỷ lệ N/X hiện tại: <span id="ratioPreview">0,51</span></span>
+              <span>Kết quả mang tính tham khảo</span>
+            </div>
+          </section>
+
+          <section class="result-card" aria-labelledby="result-title" aria-live="polite">
+            <div class="result-kicker" id="result-title">
+              <span class="result-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M6 16.5h11.5l1.8-4.3-5.8-4.7H7.2L5 12.8l1 3.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                  <path d="M8.5 19.2a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm8.4 0a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4ZM4.5 12.8H3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+              </span>
+              Cường độ bê tông dự kiến
+            </div>
+
+            <div class="result-main" id="resultMain">
+              <p class="result-label">Mác bê tông trên 1 m3</p>
+              <div class="grade-row">
+                <strong class="grade" id="gradeValue">M300</strong>
+                <span class="mpa" id="mpaValue">27,3 MPa</span>
+              </div>
+              <p class="result-note" id="resultNote">
+                Khoảng 278,8 kg/cm2. Cấp phối cân bằng, phù hợp cho nhiều hạng mục thông dụng.
+              </p>
+            </div>
+
+            <div class="divider" aria-hidden="true"></div>
+
+            <div class="total-head">
+              <p class="total-title">Tổng vật liệu cần chuẩn bị</p>
+              <p class="total-subtitle">Theo khối lượng đã nhập</p>
+            </div>
+            <div class="totals">
+              <div class="total-item">
+                <p class="total-name">Xi măng</p>
+                <p class="total-value"><span id="totalCement">350</span> <span class="total-unit">kg</span></p>
+              </div>
+              <div class="total-item">
+                <p class="total-name">Cát</p>
+                <p class="total-value"><span id="totalSand">700</span> <span class="total-unit">kg</span></p>
+              </div>
+              <div class="total-item">
+                <p class="total-name">Đá</p>
+                <p class="total-value"><span id="totalStone">1.050</span> <span class="total-unit">kg</span></p>
+              </div>
+              <div class="total-item">
+                <p class="total-name">Nước</p>
+                <p class="total-value"><span id="totalWater">180</span> <span class="total-unit">lít</span></p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const materials = [
+        {
+          key: "cement",
+          label: "Xi măng",
+          unit: "kg/m3",
+          min: 220,
+          max: 520,
+          step: 5,
+          value: 350,
+          hint: "Chất kết dính chính",
+          icon: "cement",
+        },
+        {
+          key: "sand",
+          label: "Cát",
+          unit: "kg/m3",
+          min: 450,
+          max: 950,
+          step: 10,
+          value: 700,
+          hint: "Cốt liệu mịn",
+          icon: "sand",
+        },
+        {
+          key: "stone",
+          label: "Đá",
+          unit: "kg/m3",
+          min: 750,
+          max: 1250,
+          step: 10,
+          value: 1050,
+          hint: "Cốt liệu thô",
+          icon: "stone",
+        },
+        {
+          key: "water",
+          label: "Nước",
+          unit: "lít/m3",
+          min: 120,
+          max: 240,
+          step: 1,
+          value: 180,
+          hint: "Điều chỉnh độ sụt",
+          icon: "water",
+        },
+      ];
+
+      const gradeScale = [100, 150, 200, 250, 300, 350, 400, 450, 500];
+      const formatter = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 });
+
+      const iconTemplates = {
+        cement: `
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6.5 5.5h11l2 3.8v8.2a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V9.3l2-3.8Z" stroke="currentColor" stroke-width="1.8" />
+            <path d="M7.2 9.3h9.6M8.2 13.2h7.6M8.2 16.2h5.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>`,
+        sand: `
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3.5 18.5h17l-3.2-5.2a3 3 0 0 0-5-.2l-.4.5-.7-1a3.4 3.4 0 0 0-5.6.1L3.5 18.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+            <path d="M8 8.3h.1M12 6h.1M16 8.8h.1" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+          </svg>`,
+        stone: `
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="m5 15 3.8-6.4 6.6-1.4 3.6 5.3-2.4 5.7H8.1L5 15Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+            <path d="m8.8 8.6 3.5 4.2 6.7-.3M12.3 12.8l-4.2 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>`,
+        water: `
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3.8s6 6.3 6 10.4a6 6 0 0 1-12 0c0-4.1 6-10.4 6-10.4Z" stroke="currentColor" stroke-width="1.8" />
+            <path d="M9.4 14.4a2.8 2.8 0 0 0 3.2 2.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>`,
+      };
+
+      const controlsElement = document.getElementById("materialControls");
+      const volumeInput = document.getElementById("volume");
+      const calculateButton = document.getElementById("calculateButton");
+      const ratioPreview = document.getElementById("ratioPreview");
+      const resultMain = document.getElementById("resultMain");
+
+      const state = materials.reduce((next, item) => {
+        next[item.key] = item.value;
+        return next;
+      }, {});
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function formatNumber(value) {
+        return formatter.format(value);
+      }
+
+      function nearestGrade(value) {
+        return gradeScale.reduce((closest, grade) =>
+          Math.abs(grade - value) < Math.abs(closest - value) ? grade : closest,
+        );
+      }
+
+      function getMaterial(key) {
+        return materials.find((item) => item.key === key);
+      }
+
+      function getSafeValue(key) {
+        const material = getMaterial(key);
+        const current = Number(state[key]);
+        return clamp(Number.isFinite(current) ? current : material.value, material.min, material.max);
+      }
+
+      function getSafeVolume() {
+        const current = Number(volumeInput.value);
+        return clamp(Number.isFinite(current) ? current : 1, 0.1, 100);
+      }
+
+      function updateRangeProgress(range) {
+        const min = Number(range.min);
+        const max = Number(range.max);
+        const value = Number(range.value);
+        const percent = ((value - min) / (max - min)) * 100;
+        range.style.setProperty("--progress", `${percent}%`);
+      }
+
+      function updateRatioPreview() {
+        const ratio = getSafeValue("water") / Math.max(getSafeValue("cement"), 1);
+        ratioPreview.textContent = formatNumber(ratio);
+      }
+
+      function createMaterialControl(material) {
+        const card = document.createElement("article");
+        card.className = "material-card";
+        card.innerHTML = `
+          <div class="material-row">
+            <div class="material-title">
+              <span class="material-icon">${iconTemplates[material.icon]}</span>
+              <div>
+                <label for="${material.key}Number">${material.label}</label>
+                <p class="hint">${material.hint}</p>
+              </div>
+            </div>
+            <div class="number-wrap">
+              <input class="number-input" id="${material.key}Number" type="number" min="${material.min}" max="${material.max}" step="${material.step}" value="${material.value}" aria-label="${material.label} trên 1 m3" />
+              <span class="unit">${material.unit}</span>
+            </div>
+          </div>
+          <input class="range" id="${material.key}Range" type="range" min="${material.min}" max="${material.max}" step="${material.step}" value="${material.value}" aria-label="Thanh trượt ${material.label}" />
+          <div class="range-scale" aria-hidden="true">
+            <span>${material.min}</span>
+            <span>${material.max}</span>
+          </div>
+        `;
+
+        const numberInput = card.querySelector(`#${material.key}Number`);
+        const rangeInput = card.querySelector(`#${material.key}Range`);
+
+        function sync(nextValue, shouldClamp) {
+          const value = shouldClamp
+            ? clamp(Number(nextValue), material.min, material.max)
+            : Number(nextValue);
+          state[material.key] = Number.isFinite(value) ? value : material.value;
+          numberInput.value = state[material.key];
+          rangeInput.value = clamp(state[material.key], material.min, material.max);
+          updateRangeProgress(rangeInput);
+          updateRatioPreview();
+        }
+
+        numberInput.addEventListener("input", (event) => sync(event.target.value, false));
+        numberInput.addEventListener("blur", (event) => sync(event.target.value, true));
+        rangeInput.addEventListener("input", (event) => sync(event.target.value, true));
+        updateRangeProgress(rangeInput);
+
+        return card;
+      }
+
+      function calculateMix() {
+        const cement = getSafeValue("cement");
+        const sand = getSafeValue("sand");
+        const stone = getSafeValue("stone");
+        const water = getSafeValue("water");
+        const volume = getSafeVolume();
+        const waterCementRatio = water / Math.max(cement, 1);
+        const fineRatio = sand / Math.max(sand + stone, 1);
+
+        // Công thức ước tính đơn giản dựa trên tỷ lệ nước/xi măng và cân bằng cốt liệu.
+        const baseMpa = clamp(76.3 - 92.7 * waterCementRatio, 10, 45);
+        const cementFactor = clamp(1 + (cement - 320) / 900, 0.82, 1.18);
+        const aggregateBalance = clamp(1 - Math.abs(fineRatio - 0.4) * 0.75, 0.84, 1);
+        const estimatedMpa = clamp(baseMpa * cementFactor * aggregateBalance, 10, 50);
+        const kgCm2 = estimatedMpa * 10.197;
+        const roundedStrength = Math.round(kgCm2 / 10) * 10;
+        const grade = nearestGrade(roundedStrength);
+        const note =
+          waterCementRatio <= 0.5
+            ? "Tỷ lệ nước/xi măng đang thấp, hỗn hợp ưu tiên cường độ."
+            : waterCementRatio <= 0.65
+              ? "Cấp phối cân bằng, phù hợp cho nhiều hạng mục thông dụng."
+              : "Nước đang cao, nên kiểm tra độ sụt để hạn chế giảm cường độ.";
+
+        return {
+          grade,
+          estimatedMpa,
+          kgCm2,
+          note,
+          total: {
+            cement: cement * volume,
+            sand: sand * volume,
+            stone: stone * volume,
+            water: water * volume,
+          },
+        };
+      }
+
+      function renderResult() {
+        const result = calculateMix();
+        document.getElementById("gradeValue").textContent = `M${result.grade}`;
+        document.getElementById("mpaValue").textContent = `${formatNumber(result.estimatedMpa)} MPa`;
+        document.getElementById("resultNote").textContent =
+          `Khoảng ${formatNumber(result.kgCm2)} kg/cm2. ${result.note}`;
+        document.getElementById("totalCement").textContent = formatNumber(result.total.cement);
+        document.getElementById("totalSand").textContent = formatNumber(result.total.sand);
+        document.getElementById("totalStone").textContent = formatNumber(result.total.stone);
+        document.getElementById("totalWater").textContent = formatNumber(result.total.water);
+
+        resultMain.classList.remove("is-updating");
+        void resultMain.offsetWidth;
+        resultMain.classList.add("is-updating");
+      }
+
+      function normalizeFormValues() {
+        materials.forEach((material) => {
+          const safeValue = getSafeValue(material.key);
+          state[material.key] = safeValue;
+          const numberInput = document.getElementById(`${material.key}Number`);
+          const rangeInput = document.getElementById(`${material.key}Range`);
+          numberInput.value = safeValue;
+          rangeInput.value = safeValue;
+          updateRangeProgress(rangeInput);
+        });
+
+        volumeInput.value = getSafeVolume();
+        updateRatioPreview();
+      }
+
+      materials.forEach((material) => {
+        controlsElement.appendChild(createMaterialControl(material));
+      });
+
+      volumeInput.addEventListener("input", updateRatioPreview);
+      volumeInput.addEventListener("blur", () => {
+        volumeInput.value = getSafeVolume();
+      });
+
+      calculateButton.addEventListener("click", () => {
+        normalizeFormValues();
+        renderResult();
+      });
+
+      updateRatioPreview();
+      renderResult();
+    </script>
+  </body>
+</html>
