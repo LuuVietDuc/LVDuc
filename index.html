@@ -1,12 +1,165 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Arena Web Dev App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính Toán Cấp Phối Bê Tông</title>
+    <style>
+        :root {
+            --primary: #F4D03F; /* Vàng công trình */
+            --primary-hover: #D4AC0D;
+            --bg: #FFFFFF;
+            --text: #2C3E50;
+            --card-bg: #FDFDFD;
+            --border: #EEEEEE;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body { background-color: var(--bg); color: var(--text); padding: 20px; line-height: 1.6; }
+
+        .container { max-width: 1000px; margin: 20px auto; }
+
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { font-size: 2.2rem; color: var(--text); }
+        .header span { color: var(--primary-hover); }
+
+        .layout { display: flex; flex-wrap: wrap; gap: 30px; }
+
+        .card { 
+            background: var(--card-bg); padding: 30px; border-radius: 16px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04); border: 1px solid var(--border);
+            flex: 1; min-width: 320px;
+        }
+
+        .input-group { margin-bottom: 25px; }
+        .input-group label { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 12px; color: #555; }
+        
+        .controls { display: flex; gap: 15px; align-items: center; }
+        input[type="range"] { flex: 1; accent-color: var(--primary-hover); height: 6px; }
+        input[type="number"] { width: 90px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-weight: bold; text-align: center; font-size: 1rem;}
+        input[type="number"]:focus { outline: none; border-color: var(--primary-hover); }
+
+        .btn { 
+            background-color: var(--primary); color: #111; border: none; padding: 16px; 
+            font-size: 1.1rem; font-weight: bold; border-radius: 10px; cursor: pointer; 
+            width: 100%; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(244, 208, 63, 0.3);
+        }
+        .btn:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
+
+        /* Vùng kết quả */
+        .result-wrapper { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; border: 2px dashed var(--primary); border-radius: 12px; background-color: #FFFCF5; }
+        .result-title { font-size: 1.2rem; color: #7f8c8d; font-weight: 600; }
+        .result-value { font-size: 4.5rem; font-weight: 900; color: var(--text); margin: 15px 0; text-shadow: 2px 2px 0px rgba(244, 208, 63, 0.5); }
+        .result-desc { font-size: 1.1rem; color: #27ae60; font-weight: bold; background: #e8f8f5; padding: 8px 16px; border-radius: 20px;}
+
+        /* Icon setup */
+        .icon { font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ Tính Toán <span>Cường Độ Bê Tông</span></h1>
+            <p>Điều chỉnh tỷ lệ vật liệu để xem mác bê tông dự kiến (Cho 1 m³)</p>
+        </div>
+
+        <div class="layout">
+            <div class="card">
+                <div class="input-group">
+                    <label><span class="icon">🧱</span> Xi măng (kg)</label>
+                    <div class="controls">
+                        <input type="range" id="cementRange" min="200" max="500" value="300" oninput="syncInput('cementRange', 'cementNum')">
+                        <input type="number" id="cementNum" min="200" max="500" value="300" oninput="syncInput('cementNum', 'cementRange')">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label><span class="icon">⏳</span> Cát vàng (m³)</label>
+                    <div class="controls">
+                        <input type="range" id="sandRange" min="0.3" max="0.7" step="0.01" value="0.48" oninput="syncInput('sandRange', 'sandNum')">
+                        <input type="number" id="sandNum" min="0.3" max="0.7" step="0.01" value="0.48" oninput="syncInput('sandNum', 'sandRange')">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label><span class="icon">🪨</span> Đá dăm (m³)</label>
+                    <div class="controls">
+                        <input type="range" id="stoneRange" min="0.7" max="1.0" step="0.01" value="0.85" oninput="syncInput('stoneRange', 'stoneNum')">
+                        <input type="number" id="stoneNum" min="0.7" max="1.0" step="0.01" value="0.85" oninput="syncInput('stoneNum', 'stoneRange')">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label><span class="icon">💧</span> Nước (Lít)</label>
+                    <div class="controls">
+                        <input type="range" id="waterRange" min="150" max="220" value="185" oninput="syncInput('waterRange', 'waterNum')">
+                        <input type="number" id="waterNum" min="150" max="220" value="185" oninput="syncInput('waterNum', 'waterRange')">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="calculateStrength()">TÍNH TOÁN NGAY</button>
+            </div>
+
+            <div class="card">
+                <div class="result-wrapper">
+                    <div class="result-title">Mác bê tông dự kiến đạt</div>
+                    <div class="result-value" id="resultGrade">M150</div>
+                    <div class="result-desc" id="resultStatus">Phù hợp đổ lót, bê tông móng nhẹ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Đồng bộ thanh trượt và ô nhập số
+        function syncInput(sourceId, targetId) {
+            document.getElementById(targetId).value = document.getElementById(sourceId).value;
+        }
+
+        // Hàm tính toán giả lập logic cấp phối
+        function calculateStrength() {
+            const cement = parseFloat(document.getElementById('cementNum').value);
+            
+            let grade = "M100";
+            let desc = "Bê tông lót móng";
+            let color = "#e74c3c"; // Đỏ cảnh báo
+
+            if (cement >= 400) {
+                grade = "M300";
+                desc = "Bê tông chịu lực cao (cột, dầm lớn)";
+                color = "#27ae60"; // Xanh lá
+            } else if (cement >= 320) {
+                grade = "M250";
+                desc = "Tiêu chuẩn cho nhà dân dụng (cột, sàn)";
+                color = "#2ecc71";
+            } else if (cement >= 280) {
+                grade = "M200";
+                desc = "Đổ sàn, dầm nhà cấp 4, sân bãi";
+                color = "#f39c12"; // Cam
+            } else if (cement >= 230) {
+                grade = "M150";
+                desc = "Phù hợp đổ lót, bê tông móng nhẹ";
+                color = "#e67e22";
+            }
+
+            const resultGrade = document.getElementById('resultGrade');
+            const resultStatus = document.getElementById('resultStatus');
+
+            // Tạo hiệu ứng chớp tắt nhẹ khi tính toán
+            resultGrade.style.opacity = 0;
+            setTimeout(() => {
+                resultGrade.innerText = grade;
+                resultStatus.innerText = desc;
+                resultStatus.style.color = color;
+                resultStatus.style.backgroundColor = color + "20"; // Thêm độ trong suốt cho nền
+                resultGrade.style.opacity = 1;
+            }, 200);
+        }
+        
+        // Chạy tính toán lần đầu khi mở trang
+        calculateStrength();
+    </script>
+</body>
 </html>
